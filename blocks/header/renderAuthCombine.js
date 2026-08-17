@@ -1,5 +1,10 @@
 import { events } from '@dropins/tools/event-bus.js';
-import { CUSTOMER_ACCOUNT_PATH, getProductLink, rootLink } from '../../scripts/commerce.js';
+import {
+  CUSTOMER_ACCOUNT_PATH,
+  CUSTOMER_LOGIN_PATH,
+  getProductLink,
+  rootLink,
+} from '../../scripts/commerce.js';
 
 function getCookie(cname) {
   const name = `${cname}=`;
@@ -73,69 +78,8 @@ function onHeaderLinkClick(accountLi) {
     const signInButtonMobile = document.querySelector('#dynamicButtonMobile');
 
     if (signInButtonMobile) {
-      signInButtonMobile.addEventListener('click', async () => {
-        try {
-          const { renderSignInModal } = await import(
-            '../../scripts/initializers/auth.js'
-          );
-          if (typeof renderSignInModal === 'function') {
-            renderSignInModal();
-          }
-
-          const signInModal = document.querySelector('.auth-combine-modal');
-
-          if (!signInModal) return;
-
-          signInModal.setAttribute('aria-modal', 'true');
-          signInModal.setAttribute('role', 'dialog');
-
-          let viewportMeta = document.querySelector('meta[name="viewport"]');
-
-          if (!viewportMeta) {
-            viewportMeta = document.createElement('meta');
-            viewportMeta.name = 'viewport';
-            viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-            document.head.appendChild(viewportMeta);
-          } else {
-            viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-          }
-
-          const handleModalKeydown = (event) => {
-            if (event.key === 'Escape') {
-              signInModal.style.display = 'none';
-
-              if (viewportMeta) {
-                viewportMeta.content = 'width=device-width, initial-scale=1.0';
-              }
-
-              document.removeEventListener('keydown', handleModalKeydown);
-            }
-
-            if (event.key === 'Tab') {
-              const focusableElements = signInModal.querySelectorAll(
-                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-              );
-              if (focusableElements && focusableElements.length > 0) {
-                const firstElement = focusableElements[0];
-                const lastElement = focusableElements[focusableElements.length - 1];
-
-                if (event.shiftKey) {
-                  if (document.activeElement === firstElement && lastElement) {
-                    lastElement.focus();
-                    event.preventDefault();
-                  }
-                } else if (document.activeElement === lastElement && firstElement) {
-                  firstElement.focus();
-                  event.preventDefault();
-                }
-              }
-            }
-          };
-
-          document.addEventListener('keydown', handleModalKeydown);
-        } catch (modalErr) {
-          console.warn('Failed to render sign in modal:', modalErr);
-        }
+      signInButtonMobile.addEventListener('click', () => {
+        window.location.href = rootLink(CUSTOMER_LOGIN_PATH);
       });
     }
   }
@@ -158,17 +102,8 @@ function onHeaderLinkClick(accountLi) {
     const signInButtonDesktop = document.querySelector('#dynamicButtonDesktop');
 
     if (signInButtonDesktop) {
-      signInButtonDesktop.addEventListener('click', async () => {
-        try {
-          const { renderSignInModal } = await import(
-            '../../scripts/initializers/auth.js'
-          );
-          if (typeof renderSignInModal === 'function') {
-            renderSignInModal();
-          }
-        } catch (modalErr) {
-          console.warn('Failed to render sign in modal:', modalErr);
-        }
+      signInButtonDesktop.addEventListener('click', () => {
+        window.location.href = rootLink(CUSTOMER_LOGIN_PATH);
       });
     }
   }

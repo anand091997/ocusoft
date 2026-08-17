@@ -1,14 +1,9 @@
 import { getCookie } from '@dropins/tools/lib.js';
 import * as authApi from '@dropins/storefront-auth/api.js';
-import { render as authRenderer } from '@dropins/storefront-auth/render.js';
-import { SignIn } from '@dropins/storefront-auth/containers/SignIn.js';
 import {
-  CUSTOMER_FORGOTPASSWORD_PATH,
+  CUSTOMER_LOGIN_PATH,
   rootLink,
 } from '../../scripts/commerce.js';
-
-// Path to the create-account page
-const CUSTOMER_CREATE_ACCOUNT_PATH = '/customer/create';
 
 function handleLogout(redirections) {
   const shouldRedirect = Object.entries(redirections).some(([currentPath, redirectPath]) => {
@@ -22,16 +17,6 @@ function handleLogout(redirections) {
   if (!shouldRedirect) {
     window.location.reload();
   }
-}
-
-function renderSignIn(element) {
-  authRenderer.render(SignIn, {
-    onSuccessCallback: () => {
-      window.location.reload();
-    },
-    formSize: 'small',
-    routeForgotPassword: () => rootLink(CUSTOMER_FORGOTPASSWORD_PATH),
-  })(element);
 }
 
 export function renderAuthDropdown(navTools) {
@@ -60,7 +45,17 @@ export function renderAuthDropdown(navTools) {
     authDropDownPanel.focus();
   }
 
-  loginButton.addEventListener('click', () => toggleDropDownAuthMenu());
+  loginButton.addEventListener('click', () => {
+    const getUserTokenCookie = getCookie('auth_dropin_user_token');
+    const isUserLoggedIn = Boolean(getUserTokenCookie || authApi.isAuthenticated?.());
+
+    if (isUserLoggedIn) {
+      toggleDropDownAuthMenu();
+    } else {
+      window.location.href = rootLink(CUSTOMER_LOGIN_PATH);
+    }
+  });
+
   document.addEventListener('click', async (e) => {
     const clickOnDropDownPanel = authDropDownPanel.contains(e.target);
     const clickOnLoginButton = loginButton.contains(e.target);
@@ -115,13 +110,8 @@ export function renderAuthDropdown(navTools) {
       // 1. Update trigger button
       loginButton.innerHTML = '<span class="icon-user"></span><span class="sign-in">Sign In</span>';
 
-      // 2. Render container inside panel and mount dropin
-      authDropDownPanel.innerHTML = `<div class="user-auth-container">
-      <div id="auth-dropin-container"></div>
-      <p class="sing-up-link">Don't have an account? <a href="${rootLink(CUSTOMER_CREATE_ACCOUNT_PATH)}">Create an Account</a></p>
-      </div>`;
-      const authDropinContainer = authDropDownPanel.querySelector('#auth-dropin-container');
-      renderSignIn(authDropinContainer);
+      // 2. Clear panel content when not logged in
+      authDropDownPanel.innerHTML = '';
     }
   };
 
