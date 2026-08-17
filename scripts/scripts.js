@@ -80,11 +80,27 @@ if (window.trustedTypes && window.trustedTypes.createPolicy) {
  * load fonts.css and set a session storage flag
  */
 async function loadFonts() {
-  await loadCSS(`${window.hlx.codeBasePath}/styles/fonts.css`);
+  const styles = [
+    'fonts.css',
+    'icomoon.css',
+  ];
+
+  const results = await Promise.allSettled(
+    styles.map((file) => loadCSS(`${window.hlx.codeBasePath}/styles/${file}`)),
+  );
+
+  results.forEach((result, index) => {
+    if (result.status === 'rejected') {
+      console.warn(`Failed to load ${styles[index]}`, result.reason);
+    }
+  });
+
   try {
-    if (!window.location.hostname.includes('localhost')) sessionStorage.setItem('fonts-loaded', 'true');
+    if (!window.location.hostname.includes('localhost')) {
+      sessionStorage.setItem('fonts-loaded', 'true');
+    }
   } catch (e) {
-    // do nothing
+    // Ignore storage errors
   }
 }
 
