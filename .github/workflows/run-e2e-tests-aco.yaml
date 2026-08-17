@@ -68,7 +68,10 @@ jobs:
     steps:
       - name: Check shards result
         run: |
-          if [ "${{ needs.cypress-aco-groups.result }}" != "success" ]; then
+          if [ "${{ needs.cypress-aco-groups.result }}" = "skipped" ]; then
+            echo "Test shards skipped for repo ${{ github.repository }}"
+            exit 0
+          elif [ "${{ needs.cypress-aco-groups.result }}" != "success" ]; then
             echo "One or more test shards failed: ${{ needs.cypress-aco-groups.result }}"
             exit 1
           fi

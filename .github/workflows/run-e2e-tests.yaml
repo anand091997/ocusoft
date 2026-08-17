@@ -76,7 +76,10 @@ jobs:
     steps:
       - name: Check shards result
         run: |
-          if [ "${{ needs.cypress-paas-groups.result }}" != "success" ]; then
+          if [ "${{ needs.cypress-paas-groups.result }}" = "skipped" ]; then
+            echo "Test shards skipped for repo ${{ github.repository }}"
+            exit 0
+          elif [ "${{ needs.cypress-paas-groups.result }}" != "success" ]; then
             echo "One or more test shards failed: ${{ needs.cypress-paas-groups.result }}"
             exit 1
           fi
