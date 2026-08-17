@@ -1,6 +1,5 @@
 // Drop-in Tools
 import { events } from '@dropins/tools/event-bus.js';
-
 import { tryRenderAemAssetsImage } from '@dropins/tools/lib/aem/assets.js';
 import { getMetadata } from '../../scripts/aem.js';
 import { loadFragment } from '../fragment/fragment.js';
@@ -10,69 +9,18 @@ import renderAuthCombine from './renderAuthCombine.js';
 import { renderAuthDropdown } from './renderAuthDropdown.js';
 import renderSellerAssistedBuyingBanner from './renderSellerAssistedBuyingBanner.js';
 
-// media query match that indicates mobile/tablet width
-const isDesktop = window.matchMedia('(min-width: 900px)');
-
-const labels = await fetchPlaceholders();
-
-const overlay = document.createElement('div');
-overlay.classList.add('overlay');
-document.querySelector('header').insertAdjacentElement('afterbegin', overlay);
-
-function closeOnEscape(e) {
-  if (e.code === 'Escape') {
-    const nav = document.getElementById('nav');
-    const navSections = nav.querySelector('.nav-sections');
-    if (!navSections) return;
-    const navSectionExpanded = navSections.querySelector('[aria-expanded="true"]');
-    if (navSectionExpanded && isDesktop.matches) {
-      toggleAllNavSections(navSections);
-      overlay.classList.remove('show');
-      navSectionExpanded.focus();
-    } else if (!isDesktop.matches) {
-      toggleMenu(nav, navSections);
-      overlay.classList.remove('show');
-      nav.querySelector('button').focus();
-      const navWrapper = document.querySelector('.nav-wrapper');
-      navWrapper.classList.remove('active');
+const CompareService = {
+  getProducts: () => {
+    try {
+      return JSON.parse(localStorage.getItem('commerce_compare_list') || '[]');
+    } catch (e) {
+      return [];
     }
-  }
-}
+  },
+};
 
-function closeOnFocusLost(e) {
-  const nav = e.currentTarget;
-  if (!nav.contains(e.relatedTarget)) {
-    const navSections = nav.querySelector('.nav-sections');
-    if (!navSections) return;
-    const navSectionExpanded = navSections.querySelector('[aria-expanded="true"]');
-    if (navSectionExpanded && isDesktop.matches) {
-      toggleAllNavSections(navSections, false);
-      overlay.classList.remove('show');
-    } else if (!isDesktop.matches) {
-      toggleMenu(nav, navSections, true);
-    }
-  }
-}
+const isDesktop = window.matchMedia('(min-width: 1200px)');
 
-function openOnKeydown(e) {
-  const focused = document.activeElement;
-  const isNavDrop = focused.className === 'nav-drop';
-  if (isNavDrop && (e.code === 'Enter' || e.code === 'Space')) {
-    const dropExpanded = focused.getAttribute('aria-expanded') === 'true';
-    toggleAllNavSections(focused.closest('.nav-sections'));
-    focused.setAttribute('aria-expanded', dropExpanded ? 'false' : 'true');
-  }
-}
-
-function focusNavSection() {
-  document.activeElement.addEventListener('keydown', openOnKeydown);
-}
-
-/**
- * Toggles all nav sections
- * @param {Element} sections The container element
- * @param {Boolean} expanded Whether the element should be expanded or collapsed
- */
 function toggleAllNavSections(sections, expanded = false) {
   if (!sections) return;
   sections
@@ -82,104 +30,165 @@ function toggleAllNavSections(sections, expanded = false) {
     });
 }
 
-/**
- * Toggles the entire nav
- * @param {Element} nav The container element
- * @param {Element} navSections The nav sections within the container element
- * @param {*} forceExpanded Optional param to force nav expand behavior when not null
- */
 function toggleMenu(nav, navSections, forceExpanded = null) {
   const expanded = forceExpanded !== null ? !forceExpanded : nav.getAttribute('aria-expanded') === 'true';
   const button = nav.querySelector('.nav-hamburger button');
+  if (button) {
+    button.setAttribute('aria-label', expanded ? 'Open navigation' : 'Close navigation');
+  }
   document.body.style.overflowY = expanded || isDesktop.matches ? '' : 'hidden';
   nav.setAttribute('aria-expanded', expanded ? 'false' : 'true');
   toggleAllNavSections(navSections, expanded || isDesktop.matches ? 'false' : 'true');
-  button.setAttribute('aria-label', expanded ? 'Open navigation' : 'Close navigation');
-  // enable nav dropdown keyboard accessibility
-  if (navSections) {
-    const navDrops = navSections.querySelectorAll('.nav-drop');
-    if (isDesktop.matches) {
-      navDrops.forEach((drop) => {
-        if (!drop.hasAttribute('tabindex')) {
-          drop.setAttribute('tabindex', 0);
-          drop.addEventListener('focus', focusNavSection);
-        }
-      });
-    } else {
-      navDrops.forEach((drop) => {
-        drop.classList.remove('active');
-        drop.removeAttribute('tabindex');
-        drop.removeEventListener('focus', focusNavSection);
-      });
-    }
-  }
-
-  // enable menu collapse on escape keypress
-  if (!expanded || isDesktop.matches) {
-    // collapse menu on escape press
-    window.addEventListener('keydown', closeOnEscape);
-    // collapse menu on focus lost
-    nav.addEventListener('focusout', closeOnFocusLost);
-  } else {
-    window.removeEventListener('keydown', closeOnEscape);
-    nav.removeEventListener('focusout', closeOnFocusLost);
-  }
 }
 
-const subMenuHeader = document.createElement('div');
-subMenuHeader.classList.add('submenu-header');
-subMenuHeader.innerHTML = '<h5 class="back-link">All Categories</h5><hr />';
+function decorateCompareCounter(navToolsPanel) {
+  const counterLink = document.createElement('a');
+  counterLink.href = '/compare';
+  counterLink.className = 'nav-compare-counter-btn';
+  counterLink.setAttribute('aria-label', 'Compare Products');
+  counterLink.innerHTML = `
+    <span class="icon-compare"></span>
+    <span class="compare-label">
+     compare products
+    </span>
+    <span class="compare-counter-badge">0</span>
+  `;
 
-/**
- * Sets up the submenu
- * @param {navSection} navSection The nav section element
- */
-function setupSubmenu(navSection) {
-  if (navSection.querySelector('ul')) {
-    let label;
-    if (navSection.childNodes.length) {
-      [label] = navSection.childNodes;
+  navToolsPanel.appendChild(counterLink);
+
+  const refreshCountBadge = () => {
+    const totalItems = CompareService.getProducts().length;
+    const badge = counterLink.querySelector('.compare-counter-badge');
+    if (badge) {
+      badge.textContent = totalItems;
+      badge.style.display = totalItems > 0 ? 'inline-block' : 'none';
     }
+  };
 
-    const submenu = navSection.querySelector('ul');
-    const wrapper = document.createElement('div');
-    const header = subMenuHeader.cloneNode(true);
-    const title = document.createElement('h6');
-    title.classList.add('submenu-title');
-    title.textContent = label.textContent;
+  events.on('compare/update', refreshCountBadge);
+  refreshCountBadge();
+}
 
-    wrapper.classList.add('submenu-wrapper');
-    wrapper.appendChild(header);
-    wrapper.appendChild(title);
-    wrapper.appendChild(submenu.cloneNode(true));
+// Debounce helper to prevent spamming API requests when typing in quantity field
+function debounce(func, delay = 300) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => func(...args), delay);
+  };
+}
 
-    navSection.appendChild(wrapper);
-    navSection.removeChild(submenu);
+// Lazy-loaded update function
+const triggerQuantityUpdate = debounce(async (itemUid, newQty) => {
+  try {
+    const { updateProductsFromCart } = await import('@dropins/storefront-cart/api.js');
+    await updateProductsFromCart([{ uid: itemUid, quantity: newQty }]);
+  } catch (error) {
+    console.error('Failed to update cart item quantity:', error);
   }
+}, 300);
+
+// Scans and replaces static quantity markup with interactive +/- controls & EDITABLE input field
+function initializeMiniCartSteppers(panel) {
+  const items = panel.querySelectorAll('.dropin-cart-item');
+
+  items.forEach((itemEl) => {
+    const qtyContainer = itemEl.querySelector('.dropin-cart-item__quantity');
+    if (!qtyContainer || qtyContainer.dataset.stepperInit === 'true') return;
+
+    qtyContainer.dataset.stepperInit = 'true';
+
+    // Extract item UID from testid
+    const entryTestId = itemEl.getAttribute('data-testid') || '';
+    const itemUid = entryTestId.replace('cart-list-item-entry-', '');
+
+    const qtyNumberEl = qtyContainer.querySelector('.dropin-cart-item__quantity__number');
+    const currentQty = parseInt(qtyNumberEl?.textContent?.trim() || '1', 10);
+
+    // Replace static text with an editable input stepper
+    qtyContainer.innerHTML = `
+      <div class="minicart-quantity-stepper">
+        <button type="button" class="minicart-qty-btn decrease-quantity" data-action="dec" ${currentQty <= 1 ? 'disabled' : ''} aria-label="Decrease quantity"><span>Decrease quantity</span></button>
+        <input type="number" name="quantity" aria-label="Item Quantity" class="minicart-qty-input" value="${currentQty}" min="1" aria-label="Quantity" />
+        <button type="button" class="minicart-qty-btn increase-quantity" data-action="inc" aria-label="Increase quantity"><span>Increase quantity</span></button>
+      </div>
+    `;
+
+    const input = qtyContainer.querySelector('.minicart-qty-input');
+    const decBtn = qtyContainer.querySelector('.minicart-qty-btn[data-action="dec"]');
+    const incBtn = qtyContainer.querySelector('.minicart-qty-btn[data-action="inc"]');
+
+    const handleQtyChange = (newVal) => {
+      let qty = parseInt(newVal, 10);
+      if (Number.isNaN(qty) || qty < 1) qty = 1;
+
+      input.value = qty;
+      if (decBtn) decBtn.disabled = qty <= 1;
+
+      if (itemUid) {
+        triggerQuantityUpdate(itemUid, qty);
+      }
+    };
+
+    // Button Click Events
+    decBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const qty = parseInt(input.value || '1', 10);
+      if (qty > 1) handleQtyChange(qty - 1);
+    });
+
+    incBtn?.addEventListener('click', (e) => {
+      e.preventDefault();
+      const qty = parseInt(input.value || '1', 10);
+      handleQtyChange(qty + 1);
+    });
+
+    // Direct Input Edit Events
+    input?.addEventListener('change', (e) => {
+      handleQtyChange(e.target.value);
+    });
+
+    input?.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') {
+        input.blur();
+      }
+    });
+  });
 }
 
 /**
- * loads and decorates the header, mainly the nav
- * @param {Element} block The header block element
+ * Loads and decorates the header framework layers shell
+ * @param {Element} block The header block element context window node placement
  */
 export default async function decorate(block) {
-  // Render a banner at the top of the page if seller assisted buying session identified
+  const labels = await fetchPlaceholders('placeholders/global.json');
+
+  let overlay = document.querySelector('header .overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.classList.add('overlay');
+    const headerEl = block.closest('header') || document.querySelector('header');
+    if (headerEl) {
+      headerEl.insertAdjacentElement('afterbegin', overlay);
+    }
+  }
+
   const sellerAssistedBuyingBanner = await renderSellerAssistedBuyingBanner();
   if (sellerAssistedBuyingBanner && !document.querySelector('.seller-assisted-buying-banner')) {
     document.body.insertAdjacentElement('afterbegin', sellerAssistedBuyingBanner);
   }
 
-  // load nav as fragment
+  // Load nav fragment document sheets natively
   const navMeta = getMetadata('nav');
   const navPath = navMeta ? new URL(navMeta, window.location).pathname : '/nav';
   const fragment = await loadFragment(navPath);
 
-  // decorate nav DOM
   block.textContent = '';
   const nav = document.createElement('nav');
   nav.id = 'nav';
   while (fragment.firstElementChild) nav.append(fragment.firstElementChild);
 
+  // Map functional segment locations across AEM container classes
   const classes = ['brand', 'sections', 'tools'];
   classes.forEach((c, i) => {
     const section = nav.children[i];
@@ -187,53 +196,38 @@ export default async function decorate(block) {
   });
 
   const navBrand = nav.querySelector('.nav-brand');
-  const brandLink = navBrand.querySelector('.button');
+  const brandLink = navBrand?.querySelector('.button');
   if (brandLink) {
     brandLink.className = '';
     brandLink.closest('.button-container').className = '';
   }
 
   const navSections = nav.querySelector('.nav-sections');
-  if (navSections) {
-    navSections
-      .querySelectorAll(':scope .default-content-wrapper > ul > li')
-      .forEach((navSection) => {
-        if (navSection.querySelector('ul')) navSection.classList.add('nav-drop');
-        setupSubmenu(navSection);
-        navSection.addEventListener('click', (event) => {
-          if (event.target.tagName === 'A') return;
-          if (!isDesktop.matches) {
-            navSection.classList.toggle('active');
-          }
-        });
-        navSection.addEventListener('mouseenter', () => {
-          toggleAllNavSections(navSections);
-          if (isDesktop.matches) {
-            if (!navSection.classList.contains('nav-drop')) {
-              overlay.classList.remove('show');
-              return;
-            }
-            navSection.setAttribute('aria-expanded', 'true');
-            overlay.classList.add('show');
-          }
-        });
-      });
+
+  let navTools = nav.querySelector('.nav-tools');
+  if (!navTools) {
+    navTools = nav.children[2] || nav.querySelector('.default-content-wrapper > p:last-child')?.closest('div');
+    if (navTools) {
+      navTools.classList.add('nav-tools');
+    } else {
+      navTools = document.createElement('div');
+      navTools.className = 'nav-tools';
+      nav.appendChild(navTools);
+    }
   }
 
-  const navTools = nav.querySelector('.nav-tools');
+  /** Mount the Comparison Badge Row directly next to tool elements */
+  decorateCompareCounter(navTools);
 
-  /** Wishlist */
+  /** Wishlist panel block structure setup initialization logic loops */
   const wishlist = document.createRange().createContextualFragment(`
      <div class="wishlist-wrapper nav-tools-wrapper">
-       <button type="button" class="nav-wishlist-button" aria-label="Wishlist"></button>
-       <div class="wishlist-panel nav-tools-panel"></div>
+       <button type="button" class="nav-wishlist-button" aria-label="Wishlist"><span class="icon-wishlist"></span><span>wishlist</span></button>
      </div>
    `);
-
   navTools.append(wishlist);
 
   const wishlistButton = navTools.querySelector('.nav-wishlist-button');
-
   const wishlistMeta = getMetadata('wishlist');
   const wishlistPath = wishlistMeta ? new URL(wishlistMeta, window.location).pathname : '/wishlist';
 
@@ -241,146 +235,145 @@ export default async function decorate(block) {
     window.location.href = rootLink(wishlistPath);
   });
 
-  /** Mini Cart */
+  const updateWishlistBadge = (data) => {
+    let qtyBadge = wishlistButton.querySelector('.wishlist-counter-qty');
+    const count = data?.totalQuantity
+      ?? data?.items_count
+      ?? data?.itemsCount
+      ?? data?.items?.length
+      ?? 0;
+
+    if (count > 0) {
+      if (!qtyBadge) {
+        qtyBadge = document.createElement('p');
+        qtyBadge.className = 'wishlist-counter-qty';
+        wishlistButton.appendChild(qtyBadge);
+      }
+      qtyBadge.textContent = count;
+    } else {
+      qtyBadge?.remove();
+    }
+  };
+
+  events.on('wishlist/data', (data) => {
+    updateWishlistBadge(data);
+  }, { eager: true });
+
+  import('@dropins/storefront-wishlist/api.js').then(({ getPersistedWishlistData }) => {
+    const initialWishlist = getPersistedWishlistData();
+    if (initialWishlist) updateWishlistBadge(initialWishlist);
+  }).catch((err) => {
+    console.warn('Failed to load initial wishlist state', err);
+  });
+
+  renderAuthDropdown(navTools);
+
+  /** Mini Cart implementation sequence rules checking filters */
   const excludeMiniCartFromPaths = ['/checkout'];
-
   const minicart = document.createRange().createContextualFragment(`
-     <div class="minicart-wrapper nav-tools-wrapper">
-       <button type="button" class="nav-cart-button" aria-label="Cart" aria-haspopup="dialog" aria-expanded="false" aria-controls="minicart-panel"></button>
-       <div class="minicart-panel nav-tools-panel" id="minicart-panel"></div>
-       <div class="nav-cart-status" role="status" aria-live="polite"></div>
-     </div>
-   `);
-
+    <div class="minicart-wrapper nav-tools-wrapper">
+      <button type="button" class="nav-cart-button" aria-label="Cart">
+        <span class="icon-cart"></span>
+        <span class="my-cart-label">My Cart</span>
+      </button>
+      <div class="minicart-panel nav-tools-panel"></div>
+    </div>
+  `);
   navTools.append(minicart);
 
   const minicartPanel = navTools.querySelector('.minicart-panel');
-
   const cartButton = navTools.querySelector('.nav-cart-button');
-
-  // Kept mounted at all times so the item count change is reliably
-  // announced instead of being missed, since the visual badge is a
-  // `data-count` attribute rendered via CSS and isn't announced on its own.
-  const cartStatus = navTools.querySelector('.nav-cart-status');
+  const cartButtonContainer = navTools.querySelector('.minicart-wrapper');
 
   if (excludeMiniCartFromPaths.includes(window.location.pathname)) {
-    cartButton.style.display = 'none';
+    cartButtonContainer.style.display = 'none';
   }
 
-  /**
-   * Handles loading states for navigation panels with state management
-   *
-   * @param {HTMLElement} panel - The panel element to manage loading state for
-   * @param {HTMLElement} button - The button that triggers the panel
-   * @param {Function} loader - Async function to execute during loading
-   */
   async function withLoadingState(panel, button, loader) {
     if (panel.dataset.loaded === 'true' || panel.dataset.loading === 'true') return;
-
     button.setAttribute('aria-busy', 'true');
     panel.dataset.loading = 'true';
-
     try {
       await loader();
       panel.dataset.loaded = 'true';
     } finally {
       panel.dataset.loading = 'false';
       button.removeAttribute('aria-busy');
-
-      // Execute pending toggle if exists
-      if (panel.dataset.pendingToggle === 'true') {
-        // eslint-disable-next-line no-nested-ternary
-        const pendingState = panel.dataset.pendingState === 'true' ? true : (panel.dataset.pendingState === 'false' ? false : undefined);
-
-        // Clear pending flags
-        panel.removeAttribute('data-pending-toggle');
-        panel.removeAttribute('data-pending-state');
-
-        // Execute the pending toggle
-        const show = pendingState ?? !panel.classList.contains('nav-tools-panel--show');
-        panel.classList.toggle('nav-tools-panel--show', show);
-      }
     }
   }
 
-  function togglePanel(panel, state) {
-    // If loading is in progress, queue the toggle action
-    if (panel.dataset.loading === 'true') {
-      // Store the pending toggle action
-      panel.dataset.pendingToggle = 'true';
-      panel.dataset.pendingState = state !== undefined ? state.toString() : '';
-      return;
-    }
-
-    const show = state ?? !panel.classList.contains('nav-tools-panel--show');
-    panel.classList.toggle('nav-tools-panel--show', show);
-  }
-
-  // Lazy loading for mini cart fragment
   async function loadMiniCartFragment() {
     await withLoadingState(minicartPanel, cartButton, async () => {
       const miniCartMeta = getMetadata('mini-cart');
       const miniCartPath = miniCartMeta ? new URL(miniCartMeta, window.location).pathname : '/mini-cart';
+
       const miniCartFragment = await loadFragment(miniCartPath);
-      minicartPanel.append(miniCartFragment.firstElementChild);
+      if (miniCartFragment && miniCartFragment.firstElementChild) {
+        minicartPanel.append(miniCartFragment.firstElementChild);
+      }
+
+      if (!minicartPanel.querySelector('.minicart-close')) {
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'minicart-close';
+        closeBtn.setAttribute('aria-label', 'Close mini cart');
+        closeBtn.innerHTML = '<span>Close</span>';
+        closeBtn.addEventListener('click', () => toggleMiniCart(false));
+        minicartPanel.prepend(closeBtn);
+      }
+
+      // Observe DOM updates on minicartPanel to initialize quantity steppers with inputs
+      const observer = new MutationObserver(() => {
+        initializeMiniCartSteppers(minicartPanel);
+      });
+      observer.observe(minicartPanel, { childList: true, subtree: true });
+
+      initializeMiniCartSteppers(minicartPanel);
     });
   }
 
   async function toggleMiniCart(state) {
-    if (state) {
+    const show = state ?? !minicartPanel.classList.contains('nav-tools-panel--show');
+    if (show) {
       await loadMiniCartFragment();
-      const { publishShoppingCartViewEvent } = await import('@dropins/storefront-cart/api.js');
-      publishShoppingCartViewEvent();
+      try {
+        const { publishShoppingCartViewEvent } = await import('@dropins/storefront-cart/api.js');
+        publishShoppingCartViewEvent();
+      } catch (err) {
+        console.warn('Failed to publish cart view event', err);
+      }
     }
-
-    togglePanel(minicartPanel, state);
-    cartButton.setAttribute(
-      'aria-expanded',
-      minicartPanel.classList.contains('nav-tools-panel--show') ? 'true' : 'false',
-    );
+    minicartPanel.classList.toggle('nav-tools-panel--show', show);
   }
 
-  cartButton.addEventListener('click', () => toggleMiniCart(!minicartPanel.classList.contains('nav-tools-panel--show')));
-
-  // Cart Item Counter
-  let previousCartQuantity;
+  cartButton.addEventListener('click', () => toggleMiniCart());
 
   events.on('cart/data', (data) => {
-    // preload mini cart fragment if user has a cart
     if (data) loadMiniCartFragment();
-
-    const totalQuantity = data?.totalQuantity ?? 0;
-
-    if (totalQuantity) {
-      cartButton.setAttribute('data-count', totalQuantity);
+    let qtyBadge = cartButton.querySelector('.my-cart-counter-qty');
+    if (data?.totalQuantity > 0) {
+      if (!qtyBadge) {
+        qtyBadge = document.createElement('span');
+        qtyBadge.className = 'my-cart-counter-qty';
+        cartButton.appendChild(qtyBadge);
+      }
+      qtyBadge.textContent = data.totalQuantity;
     } else {
-      cartButton.removeAttribute('data-count');
+      qtyBadge?.remove();
     }
-
-    // Skip the announcement for the initial value on page load so screen
-    // reader users aren't told about the cart contents before they've
-    // interacted with it; only announce actual changes.
-    if (previousCartQuantity !== undefined && previousCartQuantity !== totalQuantity) {
-      cartStatus.textContent = totalQuantity
-        ? `Cart updated, ${totalQuantity} item${totalQuantity === 1 ? '' : 's'} in cart`
-        : 'Cart updated, cart is empty';
-    }
-
-    previousCartQuantity = totalQuantity;
   }, { eager: true });
 
-  /** Search */
+  /** Dynamic Commerce Search Panel Generation */
   const searchFragment = document.createRange().createContextualFragment(`
-  <div class="search-wrapper nav-tools-wrapper">
-    <button type="button" class="nav-search-button">Search</button>
-    <div class="nav-search-input nav-search-panel nav-tools-panel">
-      <form id="search-bar-form"></form>
-      <div class="search-bar-result" style="display: none;"></div>
+    <div class="search-wrapper nav-tools-wrapper">
+      <button type="button" class="nav-search-button" tabindex="-1" aria-label="Search"><span class="icon-search"></span><span>Search</span></button>
+      <div class="nav-search-input nav-search-panel nav-tools-panel nav-tools-panel--show">
+        <form id="search-bar-form"></form>
+        <div class="search-bar-result" style="display: none;"></div>
+      </div>
     </div>
-  </div>
   `);
-
-  navTools.append(searchFragment);
+  navTools.prepend(searchFragment);
 
   const searchPanel = navTools.querySelector('.nav-search-panel');
   const searchButton = navTools.querySelector('.nav-search-button');
@@ -389,60 +382,50 @@ export default async function decorate(block) {
 
   async function toggleSearch(state) {
     const pageSize = 4;
+    const show = state ?? !searchPanel.classList.contains('nav-tools-panel--show');
 
-    if (state) {
+    if (show) {
       await withLoadingState(searchPanel, searchButton, async () => {
         await import('../../scripts/initializers/search.js');
-
-        // Load search components in parallel
         const [
-          { search },
-          { render },
-          { SearchResults },
-          { provider: UI, Input, Button },
+          { search: runSearch },
+          { render: dropinRender },
+          { SearchResults: ContainerResults },
+          { provider: UI, Input, Button: ComponentsButton },
         ] = await Promise.all([
           import('@dropins/storefront-product-discovery/api.js'),
           import('@dropins/storefront-product-discovery/render.js'),
           import('@dropins/storefront-product-discovery/containers/SearchResults.js'),
           import('@dropins/tools/components.js'),
-          import('@dropins/tools/lib.js'),
         ]);
 
-        render.render(SearchResults, {
+        dropinRender.render(ContainerResults, {
           skeletonCount: pageSize,
           scope: 'popover',
           routeProduct: ({ urlKey, sku }) => getProductLink(urlKey, sku),
           onSearchResult: (results) => {
-            searchResult.style.display = results.length > 0 ? 'block' : 'none';
+            searchResult.style.display = results?.length > 0 ? 'block' : 'none';
           },
           slots: {
             ProductImage: (ctx) => {
               const { product, defaultImageProps } = ctx;
               const anchorWrapper = document.createElement('a');
               anchorWrapper.href = getProductLink(product.urlKey, product.sku);
-
               tryRenderAemAssetsImage(ctx, {
                 alias: product.sku,
                 imageProps: defaultImageProps,
                 wrapper: anchorWrapper,
-                params: {
-                  width: defaultImageProps.width,
-                  height: defaultImageProps.height,
-                },
+                params: { width: defaultImageProps.width, height: defaultImageProps.height },
               });
             },
             Footer: async (ctx) => {
-              // View all results button
               const viewAllResultsWrapper = document.createElement('div');
-
-              const viewAllResultsButton = await UI.render(Button, {
-                children: labels.Global?.SearchViewAll,
+              const viewAllResultsButton = await UI.render(ComponentsButton, {
+                children: labels.Global?.SearchViewAll || 'View All',
                 variant: 'secondary',
                 href: rootLink('/search'),
               })(viewAllResultsWrapper);
-
               ctx.appendChild(viewAllResultsWrapper);
-
               ctx.onChange((next) => {
                 viewAllResultsButton?.setProps((prev) => ({
                   ...prev,
@@ -453,87 +436,70 @@ export default async function decorate(block) {
           },
         })(searchResult);
 
-        searchForm.addEventListener('submit', (e) => {
-          e.preventDefault();
-          const query = e.target.search.value;
-          if (query.length) {
-            window.location.href = `${rootLink('/search')}?q=${encodeURIComponent(query)}`;
-          }
-        });
-
         UI.render(Input, {
           name: 'search',
-          placeholder: labels.Global?.Search,
+          placeholder: labels.Global?.Search || 'Search',
           onValue: (phrase) => {
-            if (!phrase) {
-              search(null, { scope: 'popover' });
-              return;
-            }
-
-            if (phrase.length < 3) {
-              return;
-            }
-
-            search({
+            if (!phrase) { runSearch(null, { scope: 'popover' }); return; }
+            if (phrase.length < 3) return;
+            runSearch({
               phrase,
               pageSize,
-              filter: [
-                { attribute: 'visibility', in: ['Search', 'Catalog, Search'] },
-              ],
+              filter: [{ attribute: 'visibility', in: ['Search', 'Catalog, Search'] }],
             }, { scope: 'popover' });
           },
         })(searchForm);
+
+        if (!searchForm.dataset.listenerAttached) {
+          searchForm.dataset.listenerAttached = 'true';
+          searchForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const input = searchForm.querySelector('input[name="search"]') || searchForm.querySelector('input');
+            const query = input?.value?.trim();
+            if (query && query.length) {
+              window.location.href = `${rootLink('/search')}?q=${encodeURIComponent(query)}`;
+            }
+          });
+        }
       });
     }
 
-    togglePanel(searchPanel, state);
-    if (state) searchForm?.querySelector('input')?.focus();
+    searchPanel.classList.toggle('nav-tools-panel--show', show);
+    if (show) searchForm?.querySelector('input')?.focus();
   }
 
-  searchButton.addEventListener('click', () => toggleSearch(!searchPanel.classList.contains('nav-tools-panel--show')));
-
-  navTools.querySelector('.nav-search-button').addEventListener('click', () => {
-    if (isDesktop.matches) {
-      toggleAllNavSections(navSections);
-      overlay.classList.remove('show');
-    }
-  });
-
-  // Close panels when clicking outside
-  document.addEventListener('click', (e) => {
-    // Check if undo is enabled for mini cart
-    const miniCartElement = document.querySelector(
-      '[data-block-name="commerce-mini-cart"]',
-    );
-    const undoEnabled = miniCartElement
-      && (miniCartElement.textContent?.includes('undo-remove-item')
-        || miniCartElement.innerHTML?.includes('undo-remove-item'));
-
-    // For mini cart: if undo is enabled, be more restrictive about when to close
-    const shouldCloseMiniCart = undoEnabled
-      ? !minicartPanel.contains(e.target)
-      && !cartButton.contains(e.target)
-      && !e.target.closest('header')
-      : !minicartPanel.contains(e.target) && !cartButton.contains(e.target);
-
-    if (shouldCloseMiniCart) {
-      toggleMiniCart(false);
-    }
-
-    if (!searchPanel.contains(e.target) && !searchButton.contains(e.target)) {
-      toggleSearch(false);
-    }
-  });
+  toggleSearch(true);
+  searchButton.addEventListener('click', () => toggleSearch());
 
   const navWrapper = document.createElement('div');
   navWrapper.className = 'nav-wrapper';
   navWrapper.append(nav);
   block.append(navWrapper);
 
-  navWrapper.addEventListener('mouseout', (e) => {
-    if (isDesktop.matches && !nav.contains(e.relatedTarget)) {
-      toggleAllNavSections(navSections);
+  document.addEventListener('click', (e) => {
+    if (!minicartPanel.contains(e.target) && !cartButton.contains(e.target)) toggleMiniCart(false);
+    if (!searchPanel.contains(e.target) && !searchButton.contains(e.target)) {
+      searchResult.style.display = 'none';
+    }
+
+    // Close mobile navigation drawer on outside click
+    if (
+      !isDesktop.matches
+      && navWrapper.classList.contains('active')
+      && !navSections.contains(e.target)
+      && !nav.querySelector('.nav-hamburger').contains(e.target)
+    ) {
+      navWrapper.classList.remove('active');
       overlay.classList.remove('show');
+      toggleMenu(nav, navSections, false);
+    }
+  });
+
+  overlay.addEventListener('click', () => {
+    if (navWrapper.classList.contains('active')) {
+      navWrapper.classList.remove('active');
+      overlay.classList.remove('show');
+      toggleMenu(nav, navSections, false);
     }
   });
 
@@ -543,26 +509,28 @@ export default async function decorate(block) {
     toggleMenu(nav, navSections, false);
   });
 
-  // hamburger for mobile
   const hamburger = document.createElement('div');
   hamburger.classList.add('nav-hamburger');
-  hamburger.innerHTML = `<button type="button" aria-controls="nav" aria-label="Open navigation">
-      <span class="nav-hamburger-icon"></span>
-    </button>`;
-  hamburger.addEventListener('click', () => {
+  hamburger.innerHTML = '<button type="button" aria-controls="nav" aria-label="Open navigation"><span class="nav-hamburger-icon"></span></button>';
+  hamburger.addEventListener('click', (e) => {
+    e.stopPropagation();
     navWrapper.classList.toggle('active');
     overlay.classList.toggle('show');
     toggleMenu(nav, navSections);
   });
   nav.prepend(hamburger);
-  nav.setAttribute('aria-expanded', 'false');
-  // prevent mobile nav behavior on window resize
+
   toggleMenu(nav, navSections, isDesktop.matches);
   isDesktop.addEventListener('change', () => toggleMenu(nav, navSections, isDesktop.matches));
 
-  renderAuthCombine(
-    navSections,
-    () => !isDesktop.matches && toggleMenu(nav, navSections, false),
-  );
-  renderAuthDropdown(navTools);
+  if (navSections) {
+    try {
+      renderAuthCombine(
+        navSections,
+        () => !isDesktop.matches && toggleMenu(nav, navSections, false),
+      );
+    } catch (err) {
+      console.warn('renderAuthCombine error:', err);
+    }
+  }
 }
