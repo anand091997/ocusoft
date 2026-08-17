@@ -24,6 +24,28 @@ function toggleStoreDropdown(sections, expanded = false) {
 }
 
 /**
+ * Adds mobile accordion interaction for col-footer section
+ * @param {Element} footer The footer element
+ */
+function decorateFooterAccordions(footer) {
+  const colFooter = footer.querySelector('.col-footer');
+  if (!colFooter) return;
+  const columns = colFooter.querySelectorAll('.columns > div > div, :scope > div > div');
+  columns.forEach((col, index) => {
+    if (index === 1 || index === 2) {
+      const heading = col.querySelector('p:first-child');
+      const links = col.querySelectorAll('p:not(:first-child)');
+      if (heading && links.length > 0) {
+        heading.classList.add('col-footer-accordion-heading');
+        heading.addEventListener('click', () => {
+          col.classList.toggle('is-expanded');
+        });
+      }
+    }
+  });
+}
+
+/**
  * loads and decorates the footer
  * @param {Element} block The footer block element
  */
@@ -166,7 +188,10 @@ export default async function decorate(block) {
       })($storeSwitcherBtn);
     }
   }
-  while (fragment.firstElementChild) footer.append(fragment.firstElementChild);
+  if (fragment) {
+    while (fragment.firstElementChild) footer.append(fragment.firstElementChild);
+  }
 
+  decorateFooterAccordions(footer);
   block.append(footer);
 }

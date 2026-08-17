@@ -60,6 +60,14 @@ export const PRODUCT_TEMPLATE_PATHS = [
   'products/default',
 ];
 
+/**
+ * Category template paths - pages that are templates and should use
+ * default/fake category IDs. Should be relative to root path, ie "/" , "/fr/" , etc.
+ */
+export const CATEGORY_TEMPLATE_PATHS = [
+  'categories/default',
+];
+
 // PATHS
 export const SUPPORT_PATH = '/support';
 export const PRIVACY_POLICY_PATH = '/privacy-policy';
@@ -97,10 +105,10 @@ export const authPrivacyPolicyConsentSlot = {
   PrivacyPolicyConsent: async (ctx) => {
     const wrapper = document.createElement('span');
     Object.assign(wrapper.style, {
-      color: 'var(--color-neutral-700)',
-      font: 'var(--type-details-caption-2-font)',
+      color: 'var(--color-text-color)',
+      font: '14px/1.3 var(--type-base-font-family)',
       display: 'block',
-      marginBottom: 'var(--spacing-medium)',
+      marginBottom: '20px',
     });
 
     const link = document.createElement('a');
@@ -172,6 +180,10 @@ async function handleCommercePageType(pageType) {
   if (pageType === 'Product') {
     // initialize pdp
     await import('./initializers/pdp.js');
+  } else if (pageType === 'Category') {
+    // no eager initialization needed for Category pages;
+    // the product-list-page block handles its own initializers
+    // (search, wishlist) within its decorate() function.
   }
 }
 
@@ -214,6 +226,14 @@ function initializeAdobeDataLayer(pageType) {
 export async function fetchIndex(indexFile, pageSize = 500) {
   const handleIndex = async (offset) => {
     const resp = await fetch(`/${indexFile}.json?limit=${pageSize}&offset=${offset}`);
+    if (!resp.ok) {
+      return {
+        complete: true,
+        offset,
+        promise: null,
+        data: window.index[indexFile].data,
+      };
+    }
     const json = await resp.json();
 
     const newIndex = {
@@ -448,9 +468,7 @@ export async function fetchPlaceholders(path) {
       }
 
       // Create new fetch promise
-      // Use force-cache to serve any available cache entry without revalidation,
-      // reducing CDN traffic for static localization assets past their max-age.
-      const resourceFetchPromise = fetch(`${url}?sheet=data`, { cache: 'force-cache' }).then(async (response) => {
+      const resourceFetchPromise = fetch(`${url}?sheet=data`).then(async (response) => {
         if (response.ok) {
           const data = await response.json();
           // Cache the response
@@ -633,6 +651,53 @@ function getSkuFromUrl() {
 }
 
 /**
+ * Extracts category urlPath and id from the current URL or ?cp= param.
+ * @param {Document} [doc=document]
+ * @returns {{ urlPath: string, cateId: string }|null}
+ */
+export function getCategoryFromUrl(doc = document) {
+  const win = doc.defaultView || window;
+  const urlParams = new URLSearchParams(win.location.search);
+  const cp = urlParams.get('cp');
+  const path = cp ? decodeURIComponent(cp) : win.location.pathname;
+  const result = path.match(/\/categories\/(.+)$/);
+  if (result) {
+    const parts = result[1].split('/');
+    let urlPath = result[1];
+    let cateId = null;
+    // Only extract as ID if it clearly looks like base64 with padding
+    if (parts.length > 1 && parts[parts.length - 1].endsWith('=')) {
+      cateId = parts.pop();
+      urlPath = parts.join('/');
+    }
+    return { urlPath, cateId };
+  }
+  return null;
+}
+
+function getCateIdFromUrl() {
+  return getCategoryFromUrl()?.cateId || null;
+}
+
+/**
+ * Detects server-rendered category JSON-LD from overlay or bulk metadata.
+ * @param {Document} [doc=document]
+ * @returns {boolean}
+ */
+export function isCategoryPrerendered(doc = document) {
+  return [...doc.querySelectorAll('script[type="application/ld+json"]')].some((script) => {
+    if (script.dataset.name === 'category-list') return true;
+    try {
+      const data = JSON.parse(script.textContent);
+      if (data?.['@type'] === 'ItemList') return true;
+      return data?.['@graph']?.some((node) => node?.['@type'] === 'ItemList');
+    } catch {
+      return false;
+    }
+  });
+}
+
+/**
  * Extracts the defaultSku property from the product-details block element.
  * @returns {string|null} The defaultSku value from the block, or null if not found
  */
@@ -652,6 +717,25 @@ function getDefaultSkuFromBlock() {
 }
 
 /**
+ * Extracts the defaultCategoryId property from the product-listing block element.
+ * @returns {string|null} The defaultCategoryId value from the block, or null if not found
+ */
+function getDefaultCateIdFromBlock() {
+  const productListingBlock = document.querySelector('.product-list-page.block');
+  if (!productListingBlock) {
+    console.warn('No product-list-page block found');
+    return null;
+  }
+
+  const config = readBlockConfig(productListingBlock);
+  if (!config.defaultcateid) {
+    console.warn('No defaultCategoryId found in product-list-page block');
+    return null;
+  }
+  return config.defaultcateid;
+}
+
+/**
  * Checks if the current page is a product template page.
  * @returns {boolean} True if the current page matches a product template path
  */
@@ -660,6 +744,20 @@ export function isProductTemplate() {
   const { pathname } = window.location;
 
   return PRODUCT_TEMPLATE_PATHS.some((templatePath) => {
+    const fullPath = root ? `${root}${templatePath}` : templatePath;
+    return pathname === fullPath || pathname === fullPath.replace(/\/$/, '');
+  });
+}
+
+/**
+ * Checks if the current page is a category template page.
+ * @returns {boolean} True if the current page matches a category template path
+ */
+export function isCategoryTemplate() {
+  const root = getRootPath();
+  const { pathname } = window.location;
+
+  return CATEGORY_TEMPLATE_PATHS.some((templatePath) => {
     const fullPath = root ? `${root}${templatePath}` : templatePath;
     return pathname === fullPath || pathname === fullPath.replace(/\/$/, '');
   });
@@ -677,6 +775,18 @@ export function getProductLink(urlKey, sku) {
   return rootLink(`/products/${sanitizedUrlKey}/${sanitizedSku}`);
 }
 
+export function getCategoryLink(urlKey, cateId) {
+  if (!urlKey) {
+    console.warn('getCategoryLink: urlKey is missing or empty', { urlKey, cateId });
+  }
+  if (!cateId) {
+    console.warn('getCategoryLink: cateId is missing or empty', { urlKey, cateId });
+  }
+  const sanitizedUrlKey = urlKey ? sanitizeName(urlKey) : '';
+  const sanitizedCateId = cateId ? sanitizeName(cateId) : '';
+  return rootLink(`/categories/${sanitizedUrlKey}/${sanitizedCateId}`);
+}
+
 /**
  * Gets the product SKU from metadata or URL fallback.
  * @returns {string|null} The SKU from metadata or URL, or null if not found
@@ -690,30 +800,36 @@ export function getProductSku() {
 }
 
 /**
+ * Gets the category ID from metadata or URL fallback.
+ * @returns {string|null} The category ID from metadata or URL, or null if not found
+ */
+export function getCateId() {
+  if (isCategoryTemplate() && (IS_UE || IS_DA)) {
+    return getDefaultCateIdFromBlock();
+  }
+
+  return getMetadata('cateId') || getCateIdFromUrl();
+}
+
+/**
+ * Gets the category ID from metadata or block config (for template pages in UE/DA).
+ * Follows the same pattern as getProductSku().
+ * @returns {string|null} The category ID from block config (UE/DA) or null
+ */
+// export function getCategoryId() {
+//   if (isCategoryTemplate() && (IS_UE || IS_DA)) {
+//     return getDefaultCateIdFromBlock();
+//   }
+
+//   return null;
+// }
+
+/**
  * Extracts option UIDs from the URL search parameters.
  * @returns {string[]|undefined} Array of option UIDs, or undefined if not found
  */
 export function getOptionsUIDsFromUrl() {
   return new URLSearchParams(window.location.search).get('optionsUIDs')?.split(',');
-}
-
-/**
- * Determines the store identifier for tracking history based on configuration headers.
- * @returns {string|undefined} Store identifier based on header values or undefined.
- */
-export function getStoreIdentifier() {
-  const headers = getHeaders('cs');
-  const saasStoreIdentifier = 'magento-store-view-code';
-  const acoStoreIdentifier = 'ac-view-id';
-  const storeIdentifierKey = Object.keys(headers).find(
-    (key) => [saasStoreIdentifier, acoStoreIdentifier].includes(key.toLowerCase()),
-  );
-  const storeIdentifier = storeIdentifierKey ? headers[storeIdentifierKey] : undefined;
-  if (!storeIdentifier) {
-    console.warn('No store view code found in config headers for tracking history');
-    return undefined;
-  }
-  return storeIdentifier;
 }
 
 /**
@@ -725,35 +841,30 @@ function trackHistory() {
     return;
   }
   // Store product view history in session storage
-  const storeIdentifier = getStoreIdentifier();
-  if (storeIdentifier) {
-    window.adobeDataLayer.push((dl) => {
-      dl.addEventListener('adobeDataLayer:change', (event) => {
-        // Speculation Rules prerendering pushes productContext once immediately and
-        // again on activation. Ignore the prerender-only push so hovering a link
-        // doesn't record a view that never actually happened.
-        if (document.prerendering || !event.productContext || !event.productContext.sku) {
-          return;
-        }
-        const key = `${storeIdentifier}:productViewHistory`;
-        let viewHistory = JSON.parse(window.localStorage.getItem(key) || '[]');
-        viewHistory = viewHistory.filter((item) => item.sku !== event.productContext.sku);
-        viewHistory.push({ date: new Date().toISOString(), sku: event.productContext.sku });
-        window.localStorage.setItem(key, JSON.stringify(viewHistory.slice(-20)));
-      }, { path: 'productContext' });
-      dl.addEventListener('place-order', () => {
-        const shoppingCartContext = dl.getState('shoppingCartContext');
-        if (!shoppingCartContext) {
-          return;
-        }
-        const key = `${storeIdentifier}:purchaseHistory`;
-        const purchasedProducts = shoppingCartContext.items.map((item) => item.product.sku);
-        const purchaseHistory = JSON.parse(window.localStorage.getItem(key) || '[]');
-        purchaseHistory.push({ date: new Date().toISOString(), items: purchasedProducts });
-        window.localStorage.setItem(key, JSON.stringify(purchaseHistory.slice(-20)));
-      });
+  const storeViewCode = getConfigValue('headers.cs.Magento-Store-View-Code');
+  window.adobeDataLayer.push((dl) => {
+    dl.addEventListener('adobeDataLayer:change', (event) => {
+      if (!event.productContext || !event.productContext.sku) {
+        return;
+      }
+      const key = `${storeViewCode}:productViewHistory`;
+      let viewHistory = JSON.parse(window.localStorage.getItem(key) || '[]');
+      viewHistory = viewHistory.filter((item) => item.sku !== event.productContext.sku);
+      viewHistory.push({ date: new Date().toISOString(), sku: event.productContext.sku });
+      window.localStorage.setItem(key, JSON.stringify(viewHistory.slice(-20)));
+    }, { path: 'productContext' });
+    dl.addEventListener('place-order', () => {
+      const shoppingCartContext = dl.getState('shoppingCartContext');
+      if (!shoppingCartContext) {
+        return;
+      }
+      const key = `${storeViewCode}:purchaseHistory`;
+      const purchasedProducts = shoppingCartContext.items.map((item) => item.product.sku);
+      const purchaseHistory = JSON.parse(window.localStorage.getItem(key) || '[]');
+      purchaseHistory.push({ date: new Date().toISOString(), items: purchasedProducts });
+      window.localStorage.setItem(key, JSON.stringify(purchaseHistory.slice(-5)));
     });
-  }
+  });
 }
 
 /**

@@ -1,4 +1,6 @@
+import { getRootPath } from '@dropins/tools/lib/aem/configs.js';
 import {
+  buildBlock,
   loadHeader,
   loadFooter,
   decorateIcons,
@@ -8,7 +10,6 @@ import {
   loadSection,
   loadSections,
   loadCSS,
-  buildBlock,
 } from './aem.js';
 import {
   loadCommerceEager,
@@ -22,58 +23,22 @@ import {
   IS_DA,
 } from './commerce.js';
 
-/*
- * Trusted Types default policy.
- *
- * This policy is defined but NOT currently enforced: the
- * `require-trusted-types-for 'script'` CSP directive that activates it has been
- * removed from the Content-Security-Policy meta in head.html. The policy is kept
- * here so enforcement can be turned back on without re-authoring it.
- *
- * Why the directive was removed: with it enforced, payment SDKs that build a
- * same-origin iframe and synchronously inject a <script> into it fail to render.
- * The Credit Card checkout flow hits this because its hosted-fields SDK does
- * exactly that. Trusted Types policies are scoped per document/realm, so the
- * child iframe inherits the CSP directive but not this default policy; the SDK's
- * `script.src` assignment in that realm then throws "This document requires
- * 'TrustedScriptURL' assignment" and the card fields never mount. Any dependency
- * that injects scripts into a same-origin iframe realm hits the same wall.
- *
- * To re-enable enforcement: add `require-trusted-types-for 'script';` back to the
- * `Content-Security-Policy` meta in head.html. Before doing so, note that the
- * policy below is a passthrough (createScriptURL/createScript return their input
- * unchanged), so enforcing it satisfies the API without adding real containment;
- * hardening it into an allowlist is the useful next step. Enforcement will also
- * re-break any same-origin-iframe SDK unless that SDK installs its own policy in
- * the iframe realm (the correct long-term fix).
- *
- * References:
- * - Directive introduced upstream: https://github.com/adobe/aem-boilerplate/pull/641
- * - Trusted Types API: https://developer.mozilla.org/en-US/docs/Web/API/Trusted_Types_API
+/**
+ * Builds hero block and prepends to main in a new section.
+ * @param {Element} main The container element
  */
-if (window.trustedTypes && window.trustedTypes.createPolicy) {
-  const innerTT = window.trustedTypes.createPolicy('tt-inner', {
-    createHTML: (s) => s, // avoid stack overflow
-  });
-
-  window.trustedTypes.createPolicy('default', {
-    createHTML: (input, type, sink) => {
-      let processedInput = input;
-      if (/srcdoc\s*=/i.test(processedInput)) {
-        const doc = new DOMParser().parseFromString(innerTT.createHTML(processedInput), 'text/html');
-        doc.querySelectorAll('iframe[srcdoc]').forEach((el) => el.removeAttribute('srcdoc'));
-        processedInput = doc.body.innerHTML;
-      }
-      if (sink.includes('createContextualFragment') || sink.includes('Document write')) {
-        const doc = new DOMParser().parseFromString(innerTT.createHTML(processedInput), 'text/html');
-        doc.querySelectorAll('script').forEach((el) => el.remove());
-        processedInput = doc.body.innerHTML;
-      }
-      return processedInput;
-    },
-    createScriptURL: (input) => input,
-    createScript: (input) => input,
-  });
+function buildHeroBlock(main) {
+  const h1 = main.querySelector('h1');
+  const picture = main.querySelector('picture');
+  // eslint-disable-next-line no-bitwise
+  if (h1 && picture && (h1.compareDocumentPosition(picture) & Node.DOCUMENT_POSITION_PRECEDING)) {
+    if (h1.closest('.hero, .home-slider') || picture.closest('.hero, .home-slider') || h1.closest('div[class]') || picture.closest('div[class]')) {
+      return;
+    }
+    const section = document.createElement('div');
+    section.append(buildBlock('hero', { elems: [picture, h1] }));
+    main.prepend(section);
+  }
 }
 
 /**
@@ -97,35 +62,11 @@ async function loadFonts() {
 
   try {
     if (!window.location.hostname.includes('localhost')) {
-      sessionStorage.setItem('fonts-loaded', 'true');
+      sessionStorage.setItem('styles-loaded', 'true');
     }
   } catch (e) {
     // Ignore storage errors
   }
-}
-
-/**
- * Turns `/widgets/...` links into widget blocks.
- * @param {Element} main The container element
- */
-function buildWidgetAutoBlocks(main) {
-  const widgetLinks = [...main.querySelectorAll('a[href*="/widgets/"]')];
-  widgetLinks.forEach((link) => {
-    if (link.closest('.widget')) return;
-    const newLink = link.cloneNode(true);
-    const widgetBlock = buildBlock('widget', { elems: [newLink] });
-    const p = link.closest('p');
-    if (
-      p
-      && p.querySelectorAll('a').length === 1
-      && p.querySelector('a') === link
-      && p.textContent.trim() === link.textContent.trim()
-    ) {
-      p.replaceWith(widgetBlock);
-    } else {
-      link.replaceWith(widgetBlock);
-    }
-  });
 }
 
 /**
@@ -151,7 +92,8 @@ function buildAutoBlocks(main) {
         });
       });
     }
-    buildWidgetAutoBlocks(main);
+
+    if (!main.querySelector('.hero')) buildHeroBlock(main);
   } catch (error) {
     console.error('Auto Blocking failed', error);
   }
@@ -208,6 +150,48 @@ export function decorateMain(main) {
   decorateBlocks(main);
   decorateButtons(main);
 }
+function createGlobalBreadcrumbsContainer(doc = document) {
+  const rootPath = getRootPath().replace(/\/$/, '') || '/';
+  const pathname = window.location.pathname.replace(/\/$/, '') || '/';
+
+  // 1. Exit early if on the home page
+  if (pathname === rootPath) return null;
+
+  const header = doc.querySelector('header');
+  if (!header) return null;
+
+  const isPlpPage = pathname.startsWith('/categories/');
+
+  // 2. Select existing container based on page type
+  let container = isPlpPage
+    ? doc.querySelector('.category-banner-wrapper')
+    : doc.querySelector('.breadcrumbs-container');
+
+  // 3. Only create and construct DOM elements if container doesn't exist yet
+  if (!container) {
+    if (isPlpPage) {
+      container = document.createElement('div');
+      container.className = 'category-banner-wrapper';
+
+      const breadcrumbsEl = document.createElement('div');
+      breadcrumbsEl.className = 'breadcrumbs-container';
+
+      const pageTitleEl = document.createElement('h1');
+      pageTitleEl.className = 'page-title';
+
+      container.appendChild(pageTitleEl);
+      container.appendChild(breadcrumbsEl);
+    } else {
+      container = document.createElement('div');
+      container.className = 'breadcrumbs-container';
+    }
+
+    // Insert newly created container directly after header
+    header.insertAdjacentElement('afterend', container);
+  }
+
+  return container;
+}
 
 /**
  * Loads everything needed to get to LCP.
@@ -216,6 +200,7 @@ export function decorateMain(main) {
 async function loadEager(doc) {
   document.documentElement.lang = 'en';
   decorateTemplateAndTheme();
+  createGlobalBreadcrumbsContainer(doc);
 
   const main = doc.querySelector('main');
   if (main) {
@@ -274,6 +259,23 @@ function loadDelayed() {
 }
 
 async function loadPage() {
+  const { pathname, search } = window.location;
+
+  // If we are on a natural category path that is not default, redirect to default template
+  if (pathname.startsWith('/categories/') && pathname !== '/categories/default') {
+    window.location.replace(`/categories/default?cp=${encodeURIComponent(pathname)}`);
+    return;
+  }
+
+  // If we are on the default template with a cp parameter, clean the URL visually
+  if (pathname === '/categories/default' && search.includes('cp=')) {
+    const urlParams = new URLSearchParams(search);
+    const cp = urlParams.get('cp');
+    if (cp) {
+      window.history.replaceState({}, '', decodeURIComponent(cp));
+    }
+  }
+
   await loadEager(document);
   await loadLazy(document);
   loadDelayed();
