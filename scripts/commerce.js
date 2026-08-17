@@ -833,6 +833,25 @@ export function getOptionsUIDsFromUrl() {
 }
 
 /**
+ * Determines the store identifier for tracking history based on configuration headers.
+ * @returns {string|undefined} Store identifier based on header values or undefined.
+ */
+export function getStoreIdentifier() {
+  const headers = getHeaders('cs');
+  const saasStoreIdentifier = 'magento-store-view-code';
+  const acoStoreIdentifier = 'ac-view-id';
+  const storeIdentifierKey = Object.keys(headers).find(
+    (key) => [saasStoreIdentifier, acoStoreIdentifier].includes(key.toLowerCase()),
+  );
+  const storeIdentifier = storeIdentifierKey ? headers[storeIdentifierKey] : undefined;
+  if (!storeIdentifier) {
+    console.warn('No store view code found in config headers for tracking history');
+    return undefined;
+  }
+  return storeIdentifier;
+}
+
+/**
  * Tracks user browsing and purchase history for recommendations.
  * Stores product view history and purchase history in localStorage.
  */
