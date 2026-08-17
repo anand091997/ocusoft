@@ -21,32 +21,38 @@ function getCookie(cname) {
 }
 
 function onHeaderLinkClick(accountLi) {
+  if (!accountLi || typeof accountLi.querySelector !== 'function') return;
+
   if (window.innerWidth < 1024) {
     const mobileAccountWrapper = accountLi.querySelector('.mobile-nav__panel');
 
     const authCombineNavElements = document.querySelectorAll(
       '.authCombineNavElement',
     );
-    if (authCombineNavElements.length > 1) {
+    if (authCombineNavElements && authCombineNavElements.length > 1) {
       const elToHide = authCombineNavElements[1];
       if (elToHide) {
         elToHide.style.display = 'none';
       }
     }
 
-    if (mobileAccountWrapper) {
+    if (mobileAccountWrapper && typeof mobileAccountWrapper.querySelectorAll === 'function') {
       const activeNavItems = mobileAccountWrapper.querySelectorAll('li');
-      activeNavItems.forEach((activeNavItem) => {
-        activeNavItem.classList.add('mobileNavGroup');
-      });
+      if (activeNavItems) {
+        activeNavItems.forEach((activeNavItem) => {
+          activeNavItem.classList.add('mobileNavGroup');
+        });
+      }
     }
 
     const dropdownList = accountLi.querySelector('.submenu');
-    if (dropdownList) {
+    if (dropdownList && typeof dropdownList.querySelectorAll === 'function') {
       const dropdownItems = dropdownList.querySelectorAll('li');
-      dropdownItems.forEach((dropdownItem) => {
-        dropdownItem.classList.add('mobileNavGroup');
-      });
+      if (dropdownItems) {
+        dropdownItems.forEach((dropdownItem) => {
+          dropdownItem.classList.add('mobileNavGroup');
+        });
+      }
     }
 
     const dynamicButtonMobile = document.createElement('div');
@@ -68,59 +74,68 @@ function onHeaderLinkClick(accountLi) {
 
     if (signInButtonMobile) {
       signInButtonMobile.addEventListener('click', async () => {
-        const { renderSignInModal } = await import(
-          '../../scripts/initializers/auth.js'
-        );
-        renderSignInModal();
-
-        const signInModal = document.querySelector('.auth-combine-modal');
-
-        if (!signInModal) return;
-
-        signInModal.setAttribute('aria-modal', 'true');
-        signInModal.setAttribute('role', 'dialog');
-
-        const viewportMeta = document.querySelector('meta[name="viewport"]');
-
-        if (!viewportMeta) {
-          const meta = document.createElement('meta');
-          meta.name = 'viewport';
-          meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-
-          document.head.appendChild(meta);
-        } else {
-          viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-        }
-
-        const handleModalKeydown = (event) => {
-          if (event.key === 'Escape') {
-            signInModal.style.display = 'none';
-
-            viewportMeta.content = 'width=device-width, initial-scale=1.0';
-
-            document.removeEventListener('keydown', handleModalKeydown);
+        try {
+          const { renderSignInModal } = await import(
+            '../../scripts/initializers/auth.js'
+          );
+          if (typeof renderSignInModal === 'function') {
+            renderSignInModal();
           }
 
-          if (event.key === 'Tab') {
-            const focusableElements = signInModal.querySelectorAll(
-              'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-            );
-            const firstElement = focusableElements[0];
-            const lastElement = focusableElements[focusableElements.length - 1];
+          const signInModal = document.querySelector('.auth-combine-modal');
 
-            if (event.shiftKey) {
-              if (document.activeElement === firstElement) {
-                lastElement.focus();
-                event.preventDefault();
+          if (!signInModal) return;
+
+          signInModal.setAttribute('aria-modal', 'true');
+          signInModal.setAttribute('role', 'dialog');
+
+          let viewportMeta = document.querySelector('meta[name="viewport"]');
+
+          if (!viewportMeta) {
+            viewportMeta = document.createElement('meta');
+            viewportMeta.name = 'viewport';
+            viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+            document.head.appendChild(viewportMeta);
+          } else {
+            viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+          }
+
+          const handleModalKeydown = (event) => {
+            if (event.key === 'Escape') {
+              signInModal.style.display = 'none';
+
+              if (viewportMeta) {
+                viewportMeta.content = 'width=device-width, initial-scale=1.0';
               }
-            } else if (document.activeElement === lastElement) {
-              firstElement.focus();
-              event.preventDefault();
-            }
-          }
-        };
 
-        document.addEventListener('keydown', handleModalKeydown);
+              document.removeEventListener('keydown', handleModalKeydown);
+            }
+
+            if (event.key === 'Tab') {
+              const focusableElements = signInModal.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+              );
+              if (focusableElements && focusableElements.length > 0) {
+                const firstElement = focusableElements[0];
+                const lastElement = focusableElements[focusableElements.length - 1];
+
+                if (event.shiftKey) {
+                  if (document.activeElement === firstElement && lastElement) {
+                    lastElement.focus();
+                    event.preventDefault();
+                  }
+                } else if (document.activeElement === lastElement && firstElement) {
+                  firstElement.focus();
+                  event.preventDefault();
+                }
+              }
+            }
+          };
+
+          document.addEventListener('keydown', handleModalKeydown);
+        } catch (modalErr) {
+          console.warn('Failed to render sign in modal:', modalErr);
+        }
       });
     }
   }
@@ -144,10 +159,16 @@ function onHeaderLinkClick(accountLi) {
 
     if (signInButtonDesktop) {
       signInButtonDesktop.addEventListener('click', async () => {
-        const { renderSignInModal } = await import(
-          '../../scripts/initializers/auth.js'
-        );
-        renderSignInModal();
+        try {
+          const { renderSignInModal } = await import(
+            '../../scripts/initializers/auth.js'
+          );
+          if (typeof renderSignInModal === 'function') {
+            renderSignInModal();
+          }
+        } catch (modalErr) {
+          console.warn('Failed to render sign in modal:', modalErr);
+        }
       });
     }
   }
@@ -169,7 +190,8 @@ const renderAuthCombine = (navSections, toggleMenu) => {
 
   // Fallback: Check standard block structures if invoked on raw fallback files
   if (activeLists.length === 0) {
-    const fallbackList = navSections.querySelector('.default-content-wrapper > ul');
+    const fallbackList = navSections.querySelector('.default-content-wrapper > ul')
+      || navSections.querySelector('ul');
     if (fallbackList && typeof fallbackList.querySelectorAll === 'function') {
       activeLists.push(fallbackList);
     }
@@ -184,7 +206,7 @@ const renderAuthCombine = (navSections, toggleMenu) => {
 
     const accountLi = Array.from(listItems).find((li) => li?.textContent?.includes('Account'));
 
-    if (accountLi) {
+    if (accountLi && typeof accountLi.querySelector === 'function') {
       // Dynamic list target query broken down to adhere to max-len rules
       const authCombineLink = accountLi.querySelector(
         '.submenu > li:last-child, .mobile-nav__panel > li:last-child, ul > li:last-child',
@@ -220,24 +242,26 @@ const renderAuthCombine = (navSections, toggleMenu) => {
             }
 
             authCombineNavElement.style.display = 'none';
-            popupMenuContainer.innerHTML = '';
-            popupElement.style.minWidth = '250px';
+            if (popupMenuContainer) popupMenuContainer.innerHTML = '';
+            if (popupElement) popupElement.style.minWidth = '250px';
             if (headerLoginButton) {
               const spanElementText = headerLoginButton.querySelector('span');
               if (spanElementText) {
                 spanElementText.textContent = `Hi, ${getCookie('auth_dropin_firstname') || ''}`;
               }
             }
-            popupMenuContainer.insertAdjacentHTML(
-              'afterend',
-              `<ul class="popupMenuUrlList">
-                <li><a href="${rootLink(CUSTOMER_ACCOUNT_PATH)}">My Account</a></li>
-                <li>
-                  <a href="${getProductLink('hollister-backyard-sweatshirt', 'MH05')}">Product page</a>
-                </li>
-                <li><button class="logoutButton">Logout</button></li>
-              </ul>`,
-            );
+            if (popupMenuContainer) {
+              popupMenuContainer.insertAdjacentHTML(
+                'afterend',
+                `<ul class="popupMenuUrlList">
+                  <li><a href="${rootLink(CUSTOMER_ACCOUNT_PATH)}">My Account</a></li>
+                  <li>
+                    <a href="${getProductLink('hollister-backyard-sweatshirt', 'MH05')}">Product page</a>
+                  </li>
+                  <li><button class="logoutButton">Logout</button></li>
+                </ul>`,
+              );
+            }
           }
         });
         toggleMenu?.();

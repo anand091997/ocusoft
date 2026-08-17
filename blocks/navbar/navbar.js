@@ -56,4 +56,3 @@ export default async function decorate(block) {
     console.error('Critical failure establishing custom modular navbar block:', error);
   }
 }
-
