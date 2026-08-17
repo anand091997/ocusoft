@@ -587,6 +587,18 @@ async function loadHeader(header) {
 }
 
 /**
+ * Loads a block named 'topbar' into header
+ * @param {Element} header header element
+ * @returns {Promise}
+ */
+async function loadTopbar(header) {
+  const topbarBlock = buildBlock('topbar', '');
+  header.prepend(topbarBlock);
+  decorateBlock(topbarBlock);
+  return loadBlock(topbarBlock);
+}
+
+/**
  * Loads a block named 'footer' into footer
  * @param footer footer element
  * @returns {Promise}
@@ -666,6 +678,7 @@ export {
   loadCSS,
   loadFooter,
   loadHeader,
+  loadTopbar,
   loadScript,
   loadSection,
   loadSections,
