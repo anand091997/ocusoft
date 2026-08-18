@@ -140,6 +140,34 @@ function decorateButtons(main) {
 }
 
 /**
+ * Applies background colors or images from data-background section attributes.
+ * @param {Element} main The main element
+ */
+function decorateSectionBackgrounds(main) {
+  main.querySelectorAll('.section[data-background]').forEach((section) => {
+    const bg = section.dataset.background.trim();
+    if (bg) {
+      if (
+        bg.startsWith('#')
+        || bg.startsWith('rgb')
+        || bg.startsWith('hsl')
+        || bg.startsWith('var(')
+        || /^[0-9a-fA-F]{3,6}$/.test(bg)
+      ) {
+        section.style.backgroundColor = bg.startsWith('#')
+          || bg.startsWith('rgb')
+          || bg.startsWith('hsl')
+          || bg.startsWith('var(')
+          ? bg
+          : `#${bg}`;
+      } else {
+        section.style.backgroundImage = `url(${bg})`;
+      }
+    }
+  });
+}
+
+/**
  * Decorates the main element.
  * @param {Element} main The main element
  */
@@ -150,6 +178,7 @@ export function decorateMain(main) {
   decorateSections(main);
   decorateBlocks(main);
   decorateButtons(main);
+  decorateSectionBackgrounds(main);
 }
 function createGlobalBreadcrumbsContainer(doc = document) {
   const rootPath = getRootPath().replace(/\/$/, '') || '/';

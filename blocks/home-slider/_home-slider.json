@@ -1,0 +1,103 @@
+{
+  "definitions": [
+    {
+      "title": "Home Slider",
+      "id": "home-slider",
+      "model": "home-slider",
+      "plugins": {
+        "da": {
+          "rows": 1,
+          "columns": 1,
+          "fields": [
+            {
+              "name": "desktopImage",
+              "selector": "div>div:nth-child(1)>picture>img[src]"
+            },
+            {
+              "name": "desktopAlt",
+              "selector": "div>div:nth-child(1)>picture>img[alt]"
+            },
+            {
+              "name": "mobileImage",
+              "selector": "div>div:nth-child(2)>picture>img[src]"
+            },
+            {
+              "name": "mobileAlt",
+              "selector": "div>div:nth-child(2)>picture>img[alt]"
+            },
+            {
+              "name": "title",
+              "selector": "div>div:nth-child(3)>:is(h1,h2)"
+            },
+            {
+              "name": "description",
+              "selector": "div>div:nth-child(3)>p:nth-of-type(1)"
+            },
+            {
+              "name": "cta",
+              "selector": "div>div:nth-child(3)>p:nth-of-type(2)>a"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "models": [
+    {
+      "id": "home-slider",
+      "fields": [
+        {
+          "component": "reference",
+          "valueType": "string",
+          "name": "desktopImage",
+          "label": "Desktop Image",
+          "multi": false
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "desktopAlt",
+          "label": "Desktop Image Alt Text",
+          "value": ""
+        },
+        {
+          "component": "reference",
+          "valueType": "string",
+          "name": "mobileImage",
+          "label": "Mobile Image",
+          "multi": false
+        },
+        {
+          "component": "text",
+          "valueType": "string",
+          "name": "mobileAlt",
+          "label": "Mobile Image Alt Text",
+          "value": ""
+        },
+        {
+          "component": "text",
+          "name": "title",
+          "value": "",
+          "label": "Title",
+          "valueType": "string"
+        },
+        {
+          "component": "text",
+          "name": "description",
+          "value": "",
+          "label": "Description",
+          "valueType": "string",
+          "multi": true
+        },
+        {
+          "component": "text",
+          "name": "cta",
+          "value": "",
+          "label": "Button Label",
+          "valueType": "string"
+        }
+      ]
+    }
+  ],
+  "filters": []
+}
