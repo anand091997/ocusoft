@@ -84,21 +84,138 @@
   <link rel="stylesheet" href="/styles/styles.css">
   <style>
     main.error {
-      align-items: center;
       display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 220px);
+      padding: 60px 20px;
       margin: 0 auto;
-      max-width: 1264px;
-      min-height: calc(100vh - var(--nav-height));
-      padding: 0 32px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    main.error .error-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      max-width: 650px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 50px 40px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--color-neutral-300, #e8e8e8);
+      box-sizing: border-box;
+    }
+
+    main.error .error-badge {
+      display: inline-block;
+      font-size: 80px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, var(--color-brand-main, #1a428a) 0%, var(--color-brand-cyan, #5fb2e4) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 20px;
+      font-family: var(--type-base-font-family, system-ui, -apple-system, sans-serif);
+    }
+
+    main.error .error-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--color-neutral-900, #111);
+      margin: 0 0 16px 0;
+      line-height: 1.2;
+    }
+
+    main.error .error-subtitle {
+      font-size: 18px;
+      line-height: 1.6;
+      color: var(--color-neutral-700, #606060);
+      margin: 0 0 36px 0;
+      max-width: 500px;
+    }
+
+    main.error .button-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 0;
       width: 100%;
     }
 
-    main.error .error-number {
-      width: 100%;
+    main.error .button-container a.button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 36px;
+      font-size: 15px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-radius: 50px;
+      text-decoration: none;
+      transition: all 0.25s ease;
+      cursor: pointer;
+      box-sizing: border-box;
     }
 
-    main.error .error-number text {
-      font-family: monospace;
+    main.error .button-container a.error-button-home,
+    main.error .button-container a.button.primary {
+      background-color: var(--color-brand-main, #1a428a);
+      color: #ffffff;
+      border: 1px solid var(--color-brand-main, #1a428a);
+    }
+
+    main.error .button-container a.error-button-home:hover,
+    main.error .button-container a.button.primary:hover {
+      background-color: #ffffff;
+      color: var(--color-brand-main, #1a428a);
+      border-color: var(--color-brand-main, #1a428a);
+      box-shadow: 0 4px 12px rgba(26, 66, 138, 0.15);
+      transform: translateY(-1px);
+    }
+
+    main.error .button-container a.error-button-back,
+    main.error .button-container a.button.secondary {
+      background-color: #ffffff;
+      color: var(--color-brand-main, #1a428a);
+      border: 1px solid var(--color-brand-main, #1a428a);
+    }
+
+    main.error .button-container a.error-button-back:hover,
+    main.error .button-container a.button.secondary:hover {
+      background-color: var(--color-brand-main, #1a428a);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(26, 66, 138, 0.15);
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 600px) {
+      main.error .error-container {
+        padding: 36px 20px;
+      }
+
+      main.error .error-badge {
+        font-size: 60px;
+      }
+
+      main.error .error-title {
+        font-size: 24px;
+      }
+
+      main.error .error-subtitle {
+        font-size: 16px;
+      }
+
+      main.error .button-container a.button {
+        width: 100%;
+      }
     }
   </style>
   <link rel="stylesheet" href="/styles/lazy-styles.css">
@@ -107,14 +224,15 @@
 <body>
   <header></header>
   <main class="error">
-    <div class="section">
-      <svg viewBox="1 0 38 18" class="error-number">
-        <text x="0" y="17">404</text>
-      </svg>
-      <h2 class="error-message">Page Not Found</h2>
-      <p class="button-container">
-        <a href="/" class="button secondary error-button-home">Go home</a>
+    <div class="error-container">
+      <div class="error-badge">404</div>
+      <h1 class="error-title">Page Not Found</h1>
+      <p class="error-subtitle">
+        The page you are looking for doesn't exist, has been removed, or is temporarily unavailable.
       </p>
+      <div class="button-container">
+        <a href="/" class="button primary error-button-home">RETURN TO HOMEPAGE</a>
+      </div>
     </div>
   </main>
   <footer></footer>
