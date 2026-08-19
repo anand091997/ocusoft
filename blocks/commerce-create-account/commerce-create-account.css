@@ -1,5 +1,269 @@
 main .commerce-create-account-container {
-    max-width: 700px;
-    margin: 40px auto;
-    width: 100%;
+  margin: 40px auto;
+  box-sizing: border-box;
+  width: 100%;
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+.commerce-create-account {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.commerce-create-account .commerce-create-account-main-title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 27px;
+  margin-top: 0;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.commerce-create-account .commerce-create-account-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.commerce-create-account .dropin-password-status-indicator__item {
+  font-size: 14px;
+}
+
+.commerce-create-account .commerce-create-account-section-title {
+  font-size: 20px;
+  line-height: 27px;
+  font-weight: 500;
+  margin-top: 0;
+  border-bottom: 1px solid var(--color-neutral-300, #e8e8e8);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+}
+
+.commerce-create-account .commerce-create-account-section-subtitle {
+  color: var(--color-neutral-700, #606060);
+  font-size: 18px;
+  line-height: 22px;
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+/* Hide dropin default header inside auth form */
+.commerce-create-account .dropin-header-container,
+.commerce-create-account .auth-sign-up-form__title {
+  display: none !important;
+}
+
+.commerce-create-account .auth-sign-up-form {
+  padding: 0;
+}
+
+.commerce-create-account .dropin-field__hint {
+  font-size: 14px;
+}
+
+.commerce-create-account-container .commerce-create-account .dropin-input__label--floating,
+.commerce-create-account .dropin-input__label {
+  position: static;
+  transform: none;
+  order: -1;
+  padding: 0;
+  color: var(--color-neutral-700, #606060);
+  font-weight: 600;
+  line-height: 19px;
+  font-size: 1.6rem;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.commerce-create-account .dropin-input,
+.commerce-create-account .dropin-input-container {
+  width: 100%;
+  position: relative;
+}
+
+.commerce-create-account .dropin-input__input,
+.commerce-create-account input[type="email"],
+.commerce-create-account input[type="password"],
+.commerce-create-account input[type="text"] {
+  background: var(--color-neutral-50, #fff);
+  background-clip: padding-box;
+  border: 1px solid var(--color-neutral-600, #707070);
+  border-radius: 30px;
+  color: var(--color-neutral-700, #606060);
+  font-size: 16px;
+  height: 40px;
+  line-height: 19px;
+  padding: 0 20px;
+  vertical-align: baseline;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.commerce-create-account input[type="email"]:focus,
+.commerce-create-account input[type="password"]:focus,
+.commerce-create-account input[type="text"]:focus {
+  border-color: var(--color-brand-main, #1a428a);
+  box-shadow: 0 0 0 2px rgb(26 66 138 / 15%);
+}
+
+.commerce-create-account .dropin-input__field-icon--error,
+.commerce-create-account .dropin-input__field-icon--left {
+  display: none;
+}
+
+/* Password Toggle Icon */
+.commerce-create-account .dropin-input-password__eye-icon {
+  position: absolute;
+  right: 15px;
+  top: 49px;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-neutral-600, #888);
+}
+
+.commerce-create-account input[type="email"]::placeholder,
+.commerce-create-account input[type="password"]::placeholder,
+.commerce-create-account input[type="text"]::placeholder {
+  color: var(--color-neutral-500, #aaa);
+}
+
+.commerce-create-account .dropin-input--medium.dropin-input--floating:focus,
+.commerce-create-account .dropin-input--medium.dropin-input--floating:not(:placeholder-shown) {
+  padding: 0 20px;
+}
+
+/* Checkbox */
+.commerce-create-account input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-brand-main, #1a428a);
+  cursor: pointer;
+  margin: 0;
+}
+
+/* Buttons */
+.commerce-create-account .auth-sign-up-form-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.commerce-create-account .auth-sign-up-form-buttons--signin {
+  color: var(--color-neutral-700, #606060);
+  font-size: 1.6rem;
+  line-height: 1.5;
+  text-decoration: underline;
+  border: none;
+  background: var(--color-neutral-50, #fff);
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.commerce-create-account .auth-button__text {
+  padding-left: 4px;
+}
+
+.commerce-create-account .dropin-button--primary,
+.commerce-create-account button[type="submit"] {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-brand-main, #1a428a);
+  color: var(--color-neutral-50, #fff);
+  border: 1px solid var(--color-brand-main, #1a428a);
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 40px;
+  text-decoration: none;
+  min-width: 120px;
+  width: 100%;
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+}
+
+.commerce-create-account .dropin-button--primary span,
+.commerce-create-account button[type="submit"] span {
+  color: inherit;
+}
+
+.commerce-create-account .dropin-button--primary:hover,
+.commerce-create-account button[type="submit"]:hover,
+.commerce-create-account .dropin-button--primary:focus-visible,
+.commerce-create-account button[type="submit"]:focus-visible {
+  background-color: var(--color-neutral-50, #fff);
+  color: var(--color-brand-main, #1a428a);
+  border-color: var(--color-brand-main, #1a428a);
+  text-decoration: none;
+}
+
+.commerce-create-account .commerce-create-account-required-fields {
+  display: block;
+  letter-spacing: normal;
+  word-spacing: normal;
+  color: var(--color-neutral-700, #606060);
+  line-height: 21px;
+  font-size: 1.8rem;
+  margin: 30px 0 0;
+  text-align: left;
+}
+
+@media (min-width: 900px) {
+  .commerce-create-account .commerce-create-account-main-title {
+    font-size: 4.4rem;
+    line-height: 54px;
+    text-align: center;
+    margin-bottom: 70px;
+  }
+
+  .commerce-create-account .dropin-button--primary,
+  .commerce-create-account button[type="submit"] {
+    width: auto;
+  }
+
+  .commerce-create-account .commerce-create-account-section-title {
+    font-size: 2.4rem;
+    margin-bottom: 34px;
+    line-height: 34px;
+  }
+
+  .commerce-create-account .commerce-create-account-section-subtitle {
+    font-size: 2.2rem;
+    line-height: 27px;
+    margin-bottom: 45px;
+  }
+
+  .commerce-create-account-container .commerce-create-account .dropin-input__label--floating,
+  .commerce-create-account .dropin-input__label {
+    font-size: 18px;
+    line-height: 21px;
+  }
+
+  .commerce-create-account .dropin-input__input,
+  .commerce-create-account input[type="email"],
+  .commerce-create-account input[type="password"],
+  .commerce-create-account input[type="text"] {
+    height: 50px;
+  }
+
+  .commerce-create-account .dropin-input-password__eye-icon {
+    right: 20px;
+    top: 55px;
+  }
+
+  .commerce-create-account .commerce-create-account-content {
+    max-width: 850px;
+    margin: 0 auto;
+  }
 }
