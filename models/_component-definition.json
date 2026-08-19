@@ -55,6 +55,9 @@
         },
         {
           "...": "../blocks/home-slider/_*.json#/definitions"
+        },
+        {
+          "...": "../blocks/yt-video/_*.json#/definitions"
         }
       ]
     },

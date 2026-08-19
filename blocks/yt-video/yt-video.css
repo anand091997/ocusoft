@@ -1,0 +1,246 @@
+/* YouTube Video Block Styling */
+.yt-video {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.yt-video-poster-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 530px;
+  max-height: 700px;
+  aspect-ratio: 16 / 9;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.yt-video-poster-wrapper picture,
+.yt-video-poster-wrapper img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.yt-video-poster-wrapper:hover img {
+  transform: scale(1.03);
+}
+
+main > .yt-video-container {
+  margin: 0;
+}
+
+.yt-video-overlay-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 20px;
+  background: rgb(0 0 0 / 45%);
+  z-index: 2;
+  text-align: center;
+}
+
+main > .section > .yt-video-wrapper {
+  max-width: 100%;
+  padding: 0;
+}
+
+/* Play Button Styling */
+.yt-video-play-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.yt-video-play-ring {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 1px solid rgb(255 255 255 / 40%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.yt-video-poster-wrapper:hover .yt-video-play-ring {
+  border-color: rgb(255 255 255 / 80%);
+  transform: scale(1.08);
+}
+
+.yt-video-play-circle {
+  width: 71px;
+  height: 71px;
+  border-radius: 50%;
+  background-color: var(--color-neutral-50, #fff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 30%);
+  padding-left: 4px;
+}
+
+.yt-video-play-circle svg {
+  width: 27px;
+  height: 34px;
+}
+
+.yt-video-play-circle svg path {
+  fill: var(--color-brand-main, #1a428a);
+}
+
+/* Title Styling */
+.yt-video-title {
+  color: var(--color-neutral-50, #fff);
+  font-size: 30px;
+  letter-spacing: 0.6px;
+  line-height: 37px;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+/* Video Modal Dialog Overlay Styling */
+.yt-video-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: rgb(0 0 0 / 50%);
+  display: flex;
+  justify-content: center;
+  padding: 50px 20px 20px;
+  animation: yt-video-modal-fade-in 0.25s ease forwards;
+}
+
+.yt-video-modal-overlay.yt-video-modal-closing {
+  animation: yt-video-modal-fade-out 0.2s ease forwards;
+}
+
+.yt-video-modal-dialog {
+  position: relative;
+  width: 100%;
+  max-width: 700px;
+  background-color: var(--color-neutral-50, #fff);
+  border-radius: 12px;
+  box-shadow: 0 0 12px 2px rgb(0 0 0 / 35%);
+  padding: 24px 28px 28px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: max-content;
+}
+
+.yt-video-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.yt-video-modal-title {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #000;
+  line-height: 1.3;
+  text-transform: none;
+}
+
+.yt-video-modal-close {
+  background: transparent;
+  border: 1px solid #707070;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.yt-video-modal-close:hover {
+  background-color: var(--color-neutral-200, #f0f0f0);
+  border-color: #000;
+}
+
+.yt-video-modal-divider {
+  width: 100%;
+  height: 1px;
+  background-color: #606060;
+  margin-bottom: 24px;
+}
+
+.yt-video-modal-body {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-color: #000;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.yt-video-modal-body iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+@keyframes yt-video-modal-fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes yt-video-modal-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@media (min-width: 768px) {
+  .yt-video-title {
+    font-size: 44px;
+    letter-spacing: 0.88px;
+    line-height: 54px;
+  }
+
+  .yt-video-play-btn {
+    margin-bottom: 50px;
+  }
+
+  .yt-video-play-ring {
+    width: 150px;
+    height: 150px;
+  }
+
+  .yt-video-play-circle {
+    width: 90px;
+    height: 90px;
+  }
+}
