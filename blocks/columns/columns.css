@@ -219,6 +219,126 @@ main > .banner-content {
   transition: all 0.3s ease;
 }
 
+/* stylelint-disable no-descending-specificity */
+
+/* Skin Child Care Section Custom Styles */
+.section.skin-child-care {
+  position: relative;
+  margin: 0;
+}
+
+.section.skin-child-care .columns-wrapper {
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.skin-child-care picture {
+  display: block;
+}
+
+.skin-child-care p > picture:first-child:not(:only-of-type) {
+  display: none !important;
+}
+
+.skin-child-care p > picture:nth-of-type(2) {
+  display: block !important;
+}
+
+.skin-child-care .columns-2-cols h3 {
+  font-size: 1.6rem;
+  line-height: 1.9rem;
+  font-weight: 400;
+  margin: 0 0 4px;
+  color: #000;
+  z-index: 1;
+}
+
+.skin-child-care .columns-2-cols p:nth-child(2) {
+  font-size: 1.6rem;
+  line-height: 1.1;
+  margin: 0 0 10px;
+  color: #000;
+  z-index: 1;
+}
+
+.skin-child-care .columns-2-cols p:nth-child(4) {
+  font-size: 1.6rem;
+  line-height: 1.7rem;
+  margin: 0 0 16px;
+  color: #000;
+  z-index: 1;
+  font-weight: 700;
+}
+
+.skin-child-care .columns-2-cols .button-wrapper {
+  margin: 0;
+  z-index: 1;
+}
+
+.skin-child-care .columns-2-cols .button-wrapper a {
+  padding: 10px 20px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  border: none;
+  box-shadow: 0 6px 16px rgb(26 66 138 / 30%);
+}
+
+.skin-child-care .columns-2-cols > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.skin-child-care .columns-2-cols > div > div {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px 16px 20px 44%;
+  min-height: 175px;
+  box-sizing: border-box;
+}
+
+.skin-child-care .columns-2-cols > div > div:first-child {
+  background: #95e6fc;
+}
+
+.skin-child-care .columns-2-cols > div > div:last-child {
+  background: #d4effa;
+}
+
+.skin-child-care .columns-2-cols > div > div p:first-child {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  margin: 0;
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  pointer-events: none;
+  transform: scaleX(-1);
+}
+
+.skin-child-care .columns-2-cols picture {
+  width: 100%;
+  height: 100%;
+}
+
+.skin-child-care .columns-2-cols > div > div p:first-child picture,
+.skin-child-care .columns-2-cols > div > div p:first-child img {
+  width: 100%;
+  height: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  object-position: bottom right;
+  display: block;
+}
+
 .banner-content.right .columns > div > div:first-child,
 .banner-content.left .columns > div > div:last-child {
   max-width: 850px;
@@ -365,6 +485,61 @@ main > .banner-content {
     max-width: 968px;
   }
 
+  .skin-child-care p > picture:first-child:not(:only-of-type) {
+    display: block !important;
+  }
+
+  .skin-child-care p > picture:nth-of-type(2) {
+    display: none !important;
+  }
+
+  .skin-child-care .columns-2-cols h3 {
+    font-size: 3.2rem;
+    line-height: 3.7rem;
+    letter-spacing: 1.26px;
+    margin-bottom: 2px;
+  }
+
+  .skin-child-care .columns-2-cols .button-wrapper a {
+    padding: 12px 32px;
+    font-size: 1.8rem;
+  }
+
+  .skin-child-care .columns-2-cols > div {
+    flex-direction: row;
+  }
+
+  .skin-child-care .columns-2-cols > div > div {
+    flex: 1;
+    min-height: 320px;
+    padding: 40px 20% 40px 40px;
+  }
+
+  .skin-child-care .columns-2-cols p:nth-child(2) {
+    font-size: 1.8rem;
+    line-height: 2.2rem;
+    margin-bottom: 20px;
+    z-index: 2;
+  }
+
+  .skin-child-care .columns-2-cols p:nth-child(4) {
+    font-size: 1.6rem;
+    line-height: 2.2rem;
+    margin-bottom: 24px;
+  }
+
+  .skin-child-care .columns-2-cols > div > div p:first-child {
+    left: auto;
+    right: 0;
+    transform: none;
+  }
+
+  .skin-child-care .columns-2-cols > div > div p:first-child picture,
+  .skin-child-care .columns-2-cols > div > div p:first-child img {
+    max-height: 340px;
+    object-position: bottom right;
+  }
+
   .banner-content.left .columns > div > div:first-child,
   .banner-content.right .columns > div > div:last-child {
     max-width: 666px;
@@ -392,13 +567,14 @@ main > .banner-content {
     margin: 0 auto;
   }
 
-  .banner-content .columns .columns-img-col {
-    order: 2;
-  }
-
   .banner-bottom-section .columns-2-cols > div > div:first-child {
     position: absolute;
     width: 180px;
+  }
+
+  .banner-content.right .columns > div > div:first-child,
+  .banner-content.left .columns > div > div:last-child {
+    order: 2;
   }
 
   .banner-bottom-section .columns-2-cols > div > div:last-child {
