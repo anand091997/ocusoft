@@ -161,6 +161,27 @@ function initializeMiniCartSteppers(panel) {
  * @param {Element} block The header block element context window node placement
  */
 export default async function decorate(block) {
+  // Render temporary skeleton placeholder while async fragments are loading
+  if (!block.children.length) {
+    const skeleton = document.createElement('div');
+    skeleton.className = 'header-skeleton';
+    skeleton.innerHTML = `
+      <div class="header-skeleton-brand"></div>
+      <div class="header-skeleton-sections">
+        <div class="header-skeleton-line"></div>
+        <div class="header-skeleton-line"></div>
+        <div class="header-skeleton-line"></div>
+        <div class="header-skeleton-line"></div>
+      </div>
+      <div class="header-skeleton-tools">
+        <div class="header-skeleton-circle"></div>
+        <div class="header-skeleton-circle"></div>
+        <div class="header-skeleton-circle"></div>
+      </div>
+    `;
+    block.append(skeleton);
+  }
+
   const labels = await fetchPlaceholders('placeholders/global.json');
 
   let overlay = document.querySelector('header .overlay');

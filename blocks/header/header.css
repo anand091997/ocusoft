@@ -27,6 +27,91 @@ header .overlay {
     pointer-events: none;
 }
 
+@keyframes header-skeleton-shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+header .header {
+    min-height: 105px;
+}
+
+header .header:not([data-block-status="loaded"]),
+header .header[data-block-status="loading"] {
+    position: relative;
+    min-height: 105px;
+    box-sizing: border-box;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+header .header:not([data-block-status="loaded"])::before,
+header .header[data-block-status="loading"]::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #f2f4f8 25%, #e4e8f0 37%, #f2f4f8 63%);
+    background-size: 400% 100%;
+    animation: header-skeleton-shimmer 1.4s ease infinite;
+    z-index: 1;
+}
+
+/* Header Skeleton Placeholder Components */
+header .header-skeleton {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+    box-sizing: border-box;
+    width: 100%;
+    min-height: inherit;
+    position: relative;
+    z-index: 2;
+}
+
+header .header-skeleton-brand {
+    width: 160px;
+    height: 40px;
+    border-radius: 6px;
+    background: #e4e8f0;
+}
+
+header .header-skeleton-sections {
+    display: none;
+    gap: 24px;
+    align-items: center;
+}
+
+header .header-skeleton-line {
+    width: 80px;
+    height: 16px;
+    border-radius: 4px;
+    background: #e4e8f0;
+}
+
+header .header-skeleton-tools {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+header .header-skeleton-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e4e8f0;
+}
+
 header .overlay.show {
     opacity: 1;
     visibility: visible;
@@ -427,51 +512,6 @@ header
     top: -8px;
     white-space: normal;
     text-indent: 0;
-}
-
-@media (min-width: 1200px) {
-    header .nav-wrapper {
-        position: relative;
-    }
-
-    header nav .nav-brand img {
-        max-width: 199px;
-        width: 199px;
-    }
-
-    header .nav-search-panel #search {
-      height: 50px;
-      font-size: 16px;
-      padding: 0 20px;
-    }
-
-    header nav {
-        padding: 35px 20px;
-    }
-
-    header nav .nav-hamburger {
-        display: none;
-        visibility: hidden;
-    }
-
-    header nav .nav-sections {
-        align-items: center;
-        justify-content: center;
-        display: flex;
-        flex-direction: row-reverse;
-        gap: 24px;
-        visibility: visible;
-        white-space: nowrap;
-    }
-
-    header nav .minicart-panel {
-        padding-top: 72px;
-    }
-
-    header nav .minicart-panel .cart-cart-summary-list__heading-text {
-        top: 30px;
-        font-size: 18px;
-    }
 }
 
 header nav .nav-tools-panel--show {
@@ -1081,6 +1121,12 @@ header nav .nav-tools-wrapper.search-wrapper {
 }
 
 @media (min-width: 768px) {
+    header .header,
+    header .header:not([data-block-status="loaded"]),
+    header .header[data-block-status="loading"] {
+        min-height: 80px;
+    }
+
     header nav .minicart-panel {
         height: 100%;
     }
@@ -1125,6 +1171,57 @@ header nav .nav-tools-wrapper.search-wrapper {
     header .nav-search-panel .search-bar-result {
         right: 25px;
         width: calc(100% - 25px);
+    }
+}
+
+@media (min-width: 1200px) {
+    header .header,
+    header .header:not([data-block-status="loaded"]),
+    header .header[data-block-status="loading"] {
+        min-height: 120px;
+    }
+
+    header .nav-wrapper {
+        position: relative;
+    }
+
+    header nav .nav-brand img {
+        max-width: 199px;
+        width: 199px;
+    }
+
+    header .nav-search-panel #search {
+      height: 50px;
+      font-size: 16px;
+      padding: 0 20px;
+    }
+
+    header nav {
+        padding: 35px 20px;
+    }
+
+    header nav .nav-hamburger {
+        display: none;
+        visibility: hidden;
+    }
+
+    header nav .nav-sections {
+        align-items: center;
+        justify-content: center;
+        display: flex;
+        flex-direction: row-reverse;
+        gap: 24px;
+        visibility: visible;
+        white-space: nowrap;
+    }
+
+    header nav .minicart-panel {
+        padding-top: 72px;
+    }
+
+    header nav .minicart-panel .cart-cart-summary-list__heading-text {
+        top: 30px;
+        font-size: 18px;
     }
 }
 
